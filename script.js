@@ -175,7 +175,7 @@
         const pinPopupClose = document.getElementById('pin-popup-close');
 
         // DEFAULT PIN: Silakan ubah angka ini jika ingin PIN lain
-        const SECRET_PIN = "0404";
+        const SECRET_PIN = "0109";
 
         let pinAttempt = 0;
         let popupTimeout = null;
@@ -435,6 +435,88 @@ document.addEventListener("DOMContentLoaded", function () {
                 modal.classList.add('show-modal');
             });
         });
+    }
+
+    // ==========================================
+    // KONTROL TAMPILAN KARTU FAVORIT (ORBIT & GRID) + INTERAKSI SWIPE
+    // ==========================================
+    const solarContainer = document.getElementById('solar-system-container');
+    const orbitTrack = document.getElementById('orbit-track');
+    const btnOrbit = document.getElementById('btn-view-orbit');
+    const btnGrid = document.getElementById('btn-view-grid');
+    const orbitHint = document.getElementById('orbit-hint');
+
+    if (btnOrbit && btnGrid && solarContainer) {
+        btnOrbit.addEventListener('click', function () {
+            solarContainer.classList.remove('grid-view');
+            btnOrbit.classList.add('active');
+            btnGrid.classList.remove('active');
+            if (orbitHint) orbitHint.innerText = '✨ Geser atau sentuh kartu untuk melihat detail ✨';
+        });
+
+        btnGrid.addEventListener('click', function () {
+            solarContainer.classList.add('grid-view');
+            btnGrid.classList.add('active');
+            btnOrbit.classList.remove('active');
+            if (orbitHint) orbitHint.innerText = '✨ Ketuk foto kartu untuk memperbesar ✨';
+        });
+    }
+
+    // Interaksi Sentuh (Swipe / Drag) pada Orbit Track untuk Mobile & Desktop
+    if (orbitTrack) {
+        let isDragging = false;
+        let startX = 0;
+        let currentRotation = 0;
+        let hasMoved = false;
+        let resumeTimeout = null;
+
+        function getClientX(e) {
+            return e.touches ? e.touches[0].clientX : e.clientX;
+        }
+
+        function handleDragStart(e) {
+            if (solarContainer && solarContainer.classList.contains('grid-view')) return;
+            isDragging = true;
+            hasMoved = false;
+            startX = getClientX(e);
+            orbitTrack.classList.add('is-dragging');
+            clearTimeout(resumeTimeout);
+        }
+
+        function handleDragMove(e) {
+            if (!isDragging) return;
+            const currentX = getClientX(e);
+            const deltaX = currentX - startX;
+            if (Math.abs(deltaX) > 6) {
+                hasMoved = true;
+                currentRotation += deltaX * 0.45;
+                orbitTrack.style.transform = `rotateY(${currentRotation}deg)`;
+                orbitTrack.style.animation = 'none';
+                startX = currentX;
+            }
+        }
+
+        function handleDragEnd() {
+            if (!isDragging) return;
+            isDragging = false;
+            orbitTrack.classList.remove('is-dragging');
+
+            if (hasMoved) {
+                resumeTimeout = setTimeout(() => {
+                    if (solarContainer && !solarContainer.classList.contains('grid-view')) {
+                        orbitTrack.style.animation = '';
+                    }
+                }, 2500);
+            }
+        }
+
+        orbitTrack.addEventListener('touchstart', handleDragStart, { passive: true });
+        window.addEventListener('touchmove', handleDragMove, { passive: true });
+        window.addEventListener('touchend', handleDragEnd);
+
+        orbitTrack.addEventListener('mousedown', handleDragStart);
+        window.addEventListener('mousemove', handleDragMove);
+        window.addEventListener('mouseup', handleDragEnd);
     }
 
     const semuaTeksKetikan = document.querySelectorAll('.typing-text');
